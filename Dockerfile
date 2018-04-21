@@ -172,5 +172,5 @@ RUN \
 ENV NBGALLERY_CLIENT_VERSION=7.0.3
 
 LABEL gallery.nb.version=$NBGALLERY_CLIENT_VERSION \
-      gallery.nb.description="Minimal alpine-based Jupyter notebook server" \
+      gallery.nb.description="Minimal centos-based Jupyter notebook server" \
       gallery.nb.URL="https://github.com/nbgallery"

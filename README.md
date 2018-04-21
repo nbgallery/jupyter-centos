@@ -1,25 +1,34 @@
-# jupyter-docker
+# jupyter-centos
 
-This is a minimal [Alpine](https://alpinelinux.org/)-based [docker](https://www.docker.com/) image for running the Jupyter notebook server.  It is designed for constrained environments in which the size of the docker image is a major consideration.  The latest version (7.x series) is about 340MB uncompressed, roughly an order of magnitude smaller than the official Jupyter images.  It is hosted on [Docker Hub](https://hub.docker.com/r/nbgallery/jupyter-alpine/).
+This is a minimal [Centos](https://www.centos.org/)-based [docker](https://www.docker.com/) image for running the Jupyter notebook server.  It is an overly-optimistic redesign of the original [Alpine-based version](https://hub.docker.com/r/nbgallery/jupyter-alpine/) used by the nbgallery team.  For more information about the team and project overall, please check out [this post](https://nbgallery.github.io/Jupyter-Docker.html) on our [github.io](https://nbgallery.github.io) site.
 
-We achieve the small image size by using the Alpine Linux base image, minimizing the number of pre-installed Python packages, and installing other language kernels on the fly.  We currently support about a dozen languages, but only Python 2 and 3 are baked into the image.  The other kernels are built into [Alpine packages (apks)](https://github.com/nbgallery/apks) that get [installed](kernels/installers) on first use.  We also build popular Python data science packages into pre-compiled apks that can be installed using the [ipydeps](https://github.com/nbgallery/ipydeps) [dependencies mechanism](https://github.com/nbgallery/ipydeps#dependencieslink).
+## Goals
 
-For more information, please check out [this post](https://nbgallery.github.io/Jupyter-Docker.html) on our [github.io](https://nbgallery.github.io) site.
+* base the image off of Centos7
+* replicate the core functionality of the Alpine-based version:
+    - launch a secure Jupyter notebook on startup
+    - support Py3 kernel out of the box
+    - include the nbgallery additions to Jupyter
+    - allow for dynamic kernel installation for other languages
+* attempt to keep the size low (< 1G)
+    - This will not be as small as the Alpine version
+* incorporate conda for package management
+* launch into a user account rather than root
+    - unclear if this is necessary, but we'll see
 
-## Installation
+## Reasons
 
-Remember that docker commands usually need to be run as root or via sudo.
+Alpine is small. That's about its only benefit. If that's the main consideration, then use it. Through usage, however, the limitations of using Alpine as the base system for a complex and dynamic environment meant to support flexible data-science efforts have started to show up. There were a lot of tweaks that needed to be done to allow the core systems to work correctly, and in order to manage the post-container, on-demand installation of python packages, a home-grown package management system (ipydeps) was created. It tries to leverage Alpine packages (apks) when it can and pip packages when it can't, but regular problems are encountered by pip packages that need libraries Alpine doesn't have, and the challenge of maintaining an independent package management system has led to questions about whether the trade-offs that have been made just for size are worth it. 
 
-You can pull the image from Docker Hub: 
+This branch is an exploration of an alternative. It may not work, but should at least be attempted to determine if a small enough non-Alpine-based image can be created in a way to make the other pieces easier and allow us to leverage a python package system with a larger community.
 
-```
-docker pull nbgallery/jupyter-alpine
-```
+
+## Carry-over notes
 
 To build the image from source, clone or download the repo.  Then build with something like this:
 
 ```
-docker build -t nbgallery/jupyter-alpine:<version> <source-directory>
+docker build -t nbgallery/jupyter-centos:<version> <source-directory>
 ```
 
 ## Running the image
@@ -27,7 +36,7 @@ docker build -t nbgallery/jupyter-alpine:<version> <source-directory>
 You will usually launch a container something like this:
 
 ```
-docker run --rm -p 443:443 nbgallery/jupyter-alpine
+docker run --rm -p 443:443 nbgallery/jupyter-centos
 ```
 
 The default entrypoint is [jupyter-notebook-secure](util/jupyter-notebook-secure), which will generate a self-signed certificate and then launch the jupyter notebook server under HTTPS with an automatically-generated [authentication token](http://jupyter-notebook.readthedocs.io/en/stable/security.html).
