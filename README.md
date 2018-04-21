@@ -20,7 +20,7 @@ This is a minimal [Centos](https://www.centos.org/)-based [docker](https://www.d
 
 Alpine is small. That's about its only benefit. If that's the main consideration, then use it. Through usage, however, the limitations of using Alpine as the base system for a complex and dynamic environment meant to support flexible data-science efforts have started to show up. There were a lot of tweaks that needed to be done to allow the core systems to work correctly, and in order to manage the post-container, on-demand installation of python packages, a home-grown package management system (ipydeps) was created. It tries to leverage Alpine packages (apks) when it can and pip packages when it can't, but regular problems are encountered by pip packages that need libraries Alpine doesn't have, and the challenge of maintaining an independent package management system has led to questions about whether the trade-offs that have been made just for size are worth it. 
 
-This branch is an exploration of an alternative. It may not work, but should at least be attempted to determine if a small enough non-Alpine-based image can be created in a way to make the other pieces easier and allow us to leverage a python package system with a larger community.
+This branch is an exploration of an alternative. It may not work, but should at least be attempted to determine if a small enough non-Alpine-based image can be created in a way to make the other pieces easier and allow us to leverage a python package system with a larger community (like conda).
 
 
 ## Carry-over notes
