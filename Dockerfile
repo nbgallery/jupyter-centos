@@ -21,7 +21,7 @@ EXPOSE 80 443
 # COPY config/*.rsa.pub /etc/apk/keys/
 # 
 RUN yum -y update \
-    && yum -y install curl bzip2 \
+    && yum -y install curl bzip2 sudo \
     && curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh \
     && bash /tmp/miniconda.sh -bfp /usr/local/ \
     && rm -rf /tmp/miniconda.sh \
@@ -29,8 +29,8 @@ RUN yum -y update \
     && conda update conda \
     && conda clean --all --yes \
     && rpm -e --nodeps curl bzip2 \
-    && yum clean all
-
+    && yum clean all \
+    && rm -rf /var/cache/yum 
 # RUN \
 #   min-apk binutils && \
 #   min-apk \
