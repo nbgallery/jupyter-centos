@@ -25,7 +25,7 @@ for var in [x for x in os.environ if x.startswith(config_prefix)]:
   c.JupyterApp[var[len(config_prefix):].lower()] = os.environ[var]
 
 def load_config():
-  return json.loads(open('{0}/.jupyter/nbconfig/common.json'.format(home).read())
+  return json.loads(open('{0}/.jupyter/nbconfig/common.json'.format(home)).read())
 
 def save_config(config):
   with open('{0}/.jupyter/nbconfig/common.json'.format(home), 'w') as output:
