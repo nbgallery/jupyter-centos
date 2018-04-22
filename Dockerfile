@@ -70,10 +70,22 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
     && rm -rf /tmp/miniconda.sh \
     && conda install -y python=3 \
     && conda update conda \
-    && conda install -y \
+    && conda install -y -c conda-forge \
        'notebook' \
        'ipywidgets=6.*' \
-    && conda clean --all --yes 
+       'jupyter_dashboards' \
+       'jupyter_nbextensions_configurator' \
+    && pip --no-cache-dir install jupyter_dashboards ordo pypki2 ipydeps \
+    && pip --no-cache-dir install http://github.com/nbgallery/nbgallery-extensions/tarball/master#egg=jupyter_nbgallery \
+    && echo "### Install jupyter extensions" \
+    && jupyter nbextension enable --py --sys-prefix widgetsnbextension \
+#    && jupyter dashboards quick-setup --sys-prefix \
+    && jupyter serverextension enable --py jupyter_nbgallery \
+    && jupyter nbextension install --prefix=/opt/conda --py jupyter_nbgallery \
+    && jupyter nbextension enable jupyter_nbgallery --py \
+    && jupyter nbextension install --prefix=/opt/conda --py ordo \
+    && jupyter nbextension enable ordo --py \
+    && conda clean --all --yes
 
 # cleanup
 USER root
@@ -84,7 +96,16 @@ RUN echo "### Final cleanup of unneeded files" \
     && rpm --rebuilddb \
     && clean-pyc-files /usr/lib/python2* 
 
+# ########################################################################
+# # Add simple kernels (no extra apks)
+# ########################################################################
+# 
+# RUN \
+#   min-pip3 bash_kernel jupyter_c_kernel==1.0.0 && \
+#   python3 -m bash_kernel.install && \
+#   clean-pyc-files /usr/lib/python3*
 
+#============== old version =============
 # RUN \
 #   min-apk binutils && \
 #   min-apk \
