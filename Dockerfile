@@ -20,9 +20,6 @@ EXPOSE 80 443
 # COPY config/repositories /etc/apk/repositories
 # COPY config/*.rsa.pub /etc/apk/keys/
 # 
-USER root
-RUN yum -y update \
-    && yum -y install curl bzip2 sudo 
 
 # Configure environment
 ENV CONDA_DIR=/opt/conda \
@@ -39,12 +36,16 @@ ENV PATH=$CONDA_DIR/bin:$PATH \
 COPY util/fix-permissions /usr/local/bin/fix-permissions
 # Create jovyan user with UID=1000 and in the 'users' group
 # and make sure these dirs are writable by the `users` group.
-RUN useradd -m -s /bin/bash -N -u $NB_UID $NB_USER && \
-    mkdir -p $CONDA_DIR && \
-    chown $NB_USER:$NB_GID $CONDA_DIR && \
-    chmod g+w /etc/passwd /etc/group && \
-    fix-permissions $HOME && \
-    fix-permissions $CONDA_DIR
+USER root
+RUN yum -y update \
+    && yum -y install curl bzip2 sudo \
+    && useradd -m -s /bin/bash -N -u $NB_UID $NB_USER \
+    && mkdir -p $CONDA_DIR \
+    && chown $NB_USER:$NB_GID $CONDA_DIR \
+    && chmod g+w /etc/passwd /etc/group \
+    && fix-permissions $HOME \
+    && fix-permissions $CONDA_DIR \
+    && echo "$NB_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/notebook
 
 # miniconda installation
 USER $NB_UID
@@ -57,14 +58,15 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
        'jupyter' \
        'ipywidgets=6.*' \
     && conda clean --all --yes 
-
+    
 
 # cleanup
 USER root
 RUN rpm -e --nodeps curl bzip2 \
     && yum clean all \
     && rm -rf /var/cache/yum \
-    && rpm --rebuilddb
+    && rpm --rebuilddb 
+
 # RUN \
 #   min-apk binutils && \
 #   min-apk \
