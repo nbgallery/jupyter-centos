@@ -55,10 +55,9 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
     && conda install -y python=3 \
     && conda update conda \
     && conda install -y \
-       'jupyter' \
+       'notebook' \
        'ipywidgets=6.*' \
     && conda clean --all --yes 
-    
 
 # cleanup
 USER root
