@@ -34,13 +34,29 @@ ENV PATH=$CONDA_DIR/bin:$PATH \
     HOME=/home/$NB_USER
 
 COPY util/fix-permissions /usr/local/bin/fix-permissions
+COPY util/clean-pyc-files /usr/local/bin/clean-pyc-files
+COPY config/jupyter /tmp/.jupyter/
+COPY config/ipydeps /tmp/.config/ipydeps/
+COPY config/*.rsa.pub /etc/apk/keys/
 # Create jovyan user with UID=1000 and in the 'users' group
 # and make sure these dirs are writable by the `users` group.
 USER root
 RUN yum -y update \
     && yum -y install curl bzip2 sudo \
+    && echo "### Initial round of cleanups" \
+    && yum clean all \
+    && rm -rf /var/cache/yum \
+    && rpm --rebuilddb \
+    && rm /bin/bashbug \
+    && rm -rf /usr/local/share/man/* \
+    && rm /usr/bin/gprof  \
+    && clean-pyc-files /usr/lib/python2* \
+    && find /usr/share/terminfo -type f -delete \
+    && echo "### Creation of jovyan user account" \
     && useradd -m -s /bin/bash -N -u $NB_UID $NB_USER \
     && mkdir -p $CONDA_DIR \
+    && mv /tmp/.jupyter $HOME/.jupyter \
+    && mv /tmp/.config $HOME/.config \
     && chown $NB_USER:$NB_GID $CONDA_DIR \
     && chmod g+w /etc/passwd /etc/group \
     && fix-permissions $HOME \
@@ -61,10 +77,13 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
 
 # cleanup
 USER root
-RUN rpm -e --nodeps curl bzip2 \
+RUN echo "### Final cleanup of unneeded files" \
+    && rpm -e --nodeps curl bzip2 \
     && yum clean all \
     && rm -rf /var/cache/yum \
-    && rpm --rebuilddb 
+    && rpm --rebuilddb \
+    && clean-pyc-files /usr/lib/python2* 
+
 
 # RUN \
 #   min-apk binutils && \
