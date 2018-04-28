@@ -1,6 +1,7 @@
 #!/bin/bash
 
 exec jupyter notebook \
+    --ip=0.0.0.0 \
+    --port=8888 \
 	--JupyterApp.token='' \
 	--JupyterApp.password='' \
-	--allow-root
