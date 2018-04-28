@@ -75,22 +75,28 @@ USER $NB_UID
 RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh \
     && bash /tmp/miniconda.sh -bfp $CONDA_DIR \
     && rm -rf /tmp/miniconda.sh \
-    && conda install -y python=3 \
     && conda update conda \
 # core jupyter installation using conda
-    && conda install -y -c conda-forge \
-       'notebook' \
-       'ipywidgets=6.*' \
-       'jupyter_dashboards' \
-       'jupyter_nbextensions_configurator' \
+    && conda install -y 
+       python=3 \
+       notebook \
+       ipywidgets=6.* \
+#       jupyter_dashboards \ removed because it required conda-forge
+#       jupyter_nbextensions_configurator \ removed because it required conda-forge
 # Add simple kernels (no extra apks)
     && echo "### Install simple kernels" \
     && pip --no-cache-dir install bash_kernel jupyter_c_kernel==1.0.0 \
     && python -m bash_kernel.install \
 # other pip package installation and enabling
     && echo "### Install jupyter extensions" \
-    && pip --no-cache-dir install jupyter_dashboards ordo pypki2 ipydeps \
+    && pip --no-cache-dir install \
+       jupyter_dashboards \
+       ordo \
+       pypki2 \
+       ipydeps \
+       jupyter_nbextensions_configurator \
     && pip --no-cache-dir install http://github.com/nbgallery/nbgallery-extensions/tarball/master#egg=jupyter_nbgallery \
+    && jupyter nbextensions_configurator enable --prefix=/opt/conda \
     && jupyter nbextension enable --py --sys-prefix widgetsnbextension \
     && jupyter serverextension enable --py jupyter_nbgallery \
     && jupyter nbextension install --prefix=/opt/conda --py jupyter_nbgallery \
@@ -109,6 +115,11 @@ RUN echo "### Final cleanup of unneeded files" \
     && clean-pyc-files /usr/lib/python2* \
     && clean-pyc-files /opt/conda/lib/python3*
 
+
+#COPY kernels/R $CONDA_DIR/share/jupyter/kernels/R
+#COPY kernels/installers/R $CONDA_DIR/share/jupyter/kernels/installers/R
+
+USER $NB_UID
 WORKDIR $HOME
 # start notebook
 CMD ["jupyter-notebook-insecure"]
