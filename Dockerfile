@@ -77,7 +77,7 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
     && rm -rf /tmp/miniconda.sh \
     && conda update conda \
 # core jupyter installation using conda
-    && conda install -y 
+    && conda install -y \
        python=3 \
        notebook \
        ipywidgets=6.* \
