@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+EXECUTABLE=/opt/conda/envs/r-env/bin/R
+
+# Install if needed
+if [ ! -e  "$EXECUTABLE" ]; then
+	sudo yum install -y libXrender libXext
+# creates and installs in a separate virtual environment
+	conda create -y -n r-env -c r r-essentials
+fi
+if [ ! -e  "$EXECUTABLE" ]; then
+  echo "Error installing kernel!"
+  exit 2
+fi
+
+# Run the kernel
+source activate r-env
+exec $EXECUTABLE "$@"
+

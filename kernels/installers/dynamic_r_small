@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+EXECUTABLE=/opt/conda/bin/R
+
+# Install if needed
+if [ ! -e  "$EXECUTABLE" ]; then
+	sudo yum install -y libXrender libXext
+	conda install -y -c r r-irkernel
+fi
+if [ ! -e  "$EXECUTABLE" ]; then
+  echo "Error installing kernel!"
+  exit 2
+fi
+
+# Run the kernel
+exec $EXECUTABLE "$@"
+
