@@ -107,17 +107,19 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
 
 # cleanup
 USER root
+
+COPY kernels/R_small $CONDA_DIR/share/jupyter/kernels/R_small
+COPY kernels/R_big $CONDA_DIR/share/jupyter/kernels/R_big
+COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
+
 RUN echo "### Final cleanup of unneeded files" \
+    && fix-permissions $CONDA_DIR \
     && rpm -e --nodeps curl bzip2 \
     && yum clean all \
     && rm -rf /var/cache/yum \
     && rpm --rebuilddb \
     && clean-pyc-files /usr/lib/python2* \
     && clean-pyc-files /opt/conda/lib/python3*
-
-
-#COPY kernels/R $CONDA_DIR/share/jupyter/kernels/R
-#COPY kernels/installers/R $CONDA_DIR/share/jupyter/kernels/installers/R
 
 USER $NB_UID
 WORKDIR $HOME
