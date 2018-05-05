@@ -44,12 +44,13 @@ COPY util/jupyter-notebook-insecure-for-testing-only /usr/local/bin/jupyter-note
 COPY util/jupyter-notebook-secure /usr/local/bin/jupyter-notebook-secure
 COPY config/jupyter /tmp/.jupyter/
 COPY config/ipydeps /tmp/.config/ipydeps/
+COPY kernels/installers/install_c_kernel $CONDA_DIR/share/jupyter/kernels/installers/
 
 # create jovyan user with UID=1000 and in the 'users' group
 # and make sure these dirs are writable by the `users` group.
 USER root
 RUN yum -y update \
-    && yum -y install curl bzip2 sudo \
+    && yum -y install curl bzip2 sudo gcc \
     && echo "### Initial round of cleanups" \
     && yum clean all \
     && rm -rf /var/cache/yum \
@@ -81,12 +82,12 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
        python=3 \
        notebook \
        ipywidgets=6.* \
-#       jupyter_dashboards \ removed because it required conda-forge
-#       jupyter_nbextensions_configurator \ removed because it required conda-forge
 # Add simple kernels (no extra apks)
     && echo "### Install simple kernels" \
     && pip --no-cache-dir install bash_kernel jupyter_c_kernel==1.0.0 \
-    && python -m bash_kernel.install \
+    && python -m bash_kernel.install --prefix=/opt/conda \
+    && python $CONDA_DIR/share/jupyter/kernels/installers/install_c_kernel --prefix=/opt/conda \
+#	&& rm $CONDA_DIR/share/jupyter/kernels/installers/install_c_kernel \
 # other pip package installation and enabling
     && echo "### Install jupyter extensions" \
     && pip --no-cache-dir install \
@@ -103,23 +104,23 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
     && jupyter nbextension enable jupyter_nbgallery --py \
     && jupyter nbextension install --prefix=/opt/conda --py ordo \
     && jupyter nbextension enable ordo --py \
-    && conda clean --all --yes
+    && conda clean --all --yes 
 
 # cleanup
-USER root
+# USER root
 
-COPY kernels/R_small $CONDA_DIR/share/jupyter/kernels/R_small
-COPY kernels/R_big $CONDA_DIR/share/jupyter/kernels/R_big
-COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
+# COPY kernels/R_small $CONDA_DIR/share/jupyter/kernels/R_small
+# COPY kernels/R_big $CONDA_DIR/share/jupyter/kernels/R_big
+# COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
 
-RUN echo "### Final cleanup of unneeded files" \
-    && fix-permissions $CONDA_DIR \
-    && rpm -e --nodeps curl bzip2 \
-    && yum clean all \
-    && rm -rf /var/cache/yum \
-    && rpm --rebuilddb \
-    && clean-pyc-files /usr/lib/python2* \
-    && clean-pyc-files /opt/conda/lib/python3*
+# RUN echo "### Final cleanup of unneeded files" \
+#     && fix-permissions $CONDA_DIR \
+#     && rpm -e --nodeps curl bzip2 \
+#     && yum clean all \
+#     && rm -rf /var/cache/yum \
+#     && rpm --rebuilddb \
+#     && clean-pyc-files /usr/lib/python2* \
+#     && clean-pyc-files /opt/conda/lib/python3*
 
 USER $NB_UID
 WORKDIR $HOME
