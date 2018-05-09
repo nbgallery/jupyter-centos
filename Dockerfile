@@ -38,16 +38,12 @@ ENV PATH=$CONDA_DIR/bin:$PATH \
     HOME=/home/$NB_USER
 
 # copy in necessary files
-COPY util/fix-permissions /usr/local/bin/fix-permissions
-COPY util/clean-pyc-files /usr/local/bin/clean-pyc-files
-COPY util/jupyter-notebook-insecure-for-testing-only /usr/local/bin/jupyter-notebook-insecure
-COPY util/jupyter-notebook-secure /usr/local/bin/jupyter-notebook-secure
+COPY util/* /usr/local/bin/
 COPY config/jupyter /tmp/.jupyter/
 COPY config/ipydeps /tmp/.config/ipydeps/
 COPY kernels/installers/install_c_kernel $CONDA_DIR/share/jupyter/kernels/installers/
 
-# create jovyan user with UID=1000 and in the 'users' group
-# and make sure these dirs are writable by the `users` group.
+# initial installs and cleanup
 USER root
 RUN yum -y update \
     && yum -y install curl bzip2 sudo gcc \
@@ -60,6 +56,8 @@ RUN yum -y update \
     && rm /usr/bin/gprof  \
     && clean-pyc-files /usr/lib/python2* \
     && find /usr/share/terminfo -type f -delete \
+# create jovyan user with UID=1000 and in the 'users' group
+# and make sure these dirs are writable by the `users` group.
     && echo "### Creation of jovyan user account" \
     && useradd -m -s /bin/bash -N -u $NB_UID $NB_USER \
     && mkdir -p $CONDA_DIR \
@@ -74,37 +72,58 @@ RUN yum -y update \
 # miniconda installation
 USER $NB_UID
 RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh \
+    && echo "### Installing miniconda" \
     && bash /tmp/miniconda.sh -bfp $CONDA_DIR \
     && rm -rf /tmp/miniconda.sh \
     && conda update conda \
 # core jupyter installation using conda
+    && echo "### Installs using conda" \
     && conda install -y \
-       python=3 \
-       notebook \
-       ipywidgets=6.* \
-# Add simple kernels (no extra apks)
-    && echo "### Install simple kernels" \
-    && pip --no-cache-dir install bash_kernel jupyter_c_kernel==1.0.0 \
-    && python -m bash_kernel.install --prefix=/opt/conda \
-    && python $CONDA_DIR/share/jupyter/kernels/installers/install_c_kernel --prefix=/opt/conda \
-#	&& rm $CONDA_DIR/share/jupyter/kernels/installers/install_c_kernel \
-# other pip package installation and enabling
-    && echo "### Install jupyter extensions" \
+        python=3 \
+        notebook \
+        ipywidgets=6.* \
+# additional desired packages using pip
+    && echo "### Installs using pip" \
     && pip --no-cache-dir install \
-       jupyter_dashboards \
-       ordo \
-       pypki2 \
-       ipydeps \
-       jupyter_nbextensions_configurator \
-    && pip --no-cache-dir install http://github.com/nbgallery/nbgallery-extensions/tarball/master#egg=jupyter_nbgallery \
-    && jupyter nbextensions_configurator enable --prefix=/opt/conda \
+        bash_kernel \
+        jupyter_c_kernel==1.0.0 \
+        jupyter_dashboards \
+        ordo \
+        pypki2 \
+        ipydeps \
+        jupyter_nbextensions_configurator \
+        http://github.com/nbgallery/nbgallery-extensions/tarball/master#egg=jupyter_nbgallery \
+# Add simple kernels (no extra apks)
+    && echo "### Activate simple kernels" \
+    && python -m bash_kernel.install --prefix=$CONDA_DIR \
+    && python $CONDA_DIR/share/jupyter/kernels/installers/install_c_kernel --prefix=$CONDA_DIR \
+# Other pip package installation and enabling
+    && echo "### Activate jupyter extensions" \
+    && jupyter nbextensions_configurator enable --prefix=$CONDA_DIR \
     && jupyter nbextension enable --py --sys-prefix widgetsnbextension \
     && jupyter serverextension enable --py jupyter_nbgallery \
-    && jupyter nbextension install --prefix=/opt/conda --py jupyter_nbgallery \
+    && jupyter nbextension install --prefix=$CONDA_DIR --py jupyter_nbgallery \
     && jupyter nbextension enable jupyter_nbgallery --py \
-    && jupyter nbextension install --prefix=/opt/conda --py ordo \
+    && jupyter nbextension install --prefix=$CONDA_DIR --py ordo \
     && jupyter nbextension enable ordo --py \
-    && conda clean --all --yes 
+    && conda clean --all --yes \
+# Patches? Do we still need them? They go here 
+    && echo "### Patching" \
+    && sed -i 's/_max_upload_size_mb = [0-9][0-9]/_max_upload_size_mb = 50/g' \
+         $CONDA_DIR/lib/python3*/site-packages/notebook/static/tree/js/notebooklist.js \
+         $CONDA_DIR/lib/python3*/site-packages/notebook/static/tree/js/main.min.js \
+         $CONDA_DIR/lib/python3*/site-packages/notebook/static/tree/js/main.min.js.map 
+# Last cleanup
+#    && echo "### Final cleanup of unneeded files" \
+#    && sudo /usr/local/bin/fix-permissions $CONDA_DIR \
+#    && sudo rpm -e --nodeps curl bzip2 \
+#    && sudo yum clean all \
+#    && sudo rm -rf /var/cache/yum \
+#    && sudo rpm --rebuilddb \
+#    && sudo /usr/local/bin/clean-pyc-files /usr/lib/python2* \
+#    && sudo /usr/local/bin/clean-pyc-files $CONDA_DIR/lib/python3* \
+#    && echo "### Done with cleanup"
+
 
 # cleanup
 # USER root
@@ -120,7 +139,7 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
 #     && rm -rf /var/cache/yum \
 #     && rpm --rebuilddb \
 #     && clean-pyc-files /usr/lib/python2* \
-#     && clean-pyc-files /opt/conda/lib/python3*
+#     && clean-pyc-files $CONDA_DIR/lib/python3*
 
 USER $NB_UID
 WORKDIR $HOME
