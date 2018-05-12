@@ -1,29 +1,4 @@
-FROM centos:centos7
-MAINTAINER team@nb.gallery
-
-########################################################################
-# Set up OS
-########################################################################
-
-EXPOSE 80 443
-# WORKDIR /root
-# 
-# ENV CPPFLAGS=-s \
-#     SHELL=/bin/bash
-# 
-# COPY util/* /usr/local/bin/
-# COPY config/bashrc /root/.bashrc
-# COPY patches /root/.patches
-# COPY config/repositories /etc/apk/repositories
-# COPY config/*.rsa.pub /etc/apk/keys/
-# 
-# 
-
-# Add Tini
-ENV TINI_VERSION=v0.18.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
-ENTRYPOINT ["/tini", "--"]
+FROM centos:latest as builder
 
 # Configure environment
 ENV CONDA_DIR=/opt/conda \
@@ -39,7 +14,7 @@ ENV PATH=$CONDA_DIR/bin:$PATH \
     HOME=/home/$NB_USER
 
 # copy in necessary files
-COPY util/* /usr/local/bin/
+COPY util/* $CONDA_DIR/bin/
 COPY config/jupyter /tmp/.jupyter/
 COPY config/ipydeps /tmp/.config/ipydeps/
 COPY kernels/installers/install_c_kernel $CONDA_DIR/share/jupyter/kernels/installers/
@@ -48,24 +23,15 @@ COPY kernels/installers/install_c_kernel $CONDA_DIR/share/jupyter/kernels/instal
 USER root
 RUN yum -y update \
     && yum -y install curl bzip2 sudo gcc \
-    && echo "### Initial round of cleanups" \
-    && yum clean all \
-    && rm -rf /var/cache/yum \
-    && rpm --rebuilddb \
-    && rm /bin/bashbug \
-    && rm -rf /usr/local/share/man/* \
-    && rm /usr/bin/gprof  \
-    && clean-pyc-files /usr/lib/python2* \
-    && find /usr/share/terminfo -type f -delete \
-# create jovyan user with UID=1000 and in the 'users' group
-# and make sure these dirs are writable by the `users` group.
+    # create jovyan user with UID=1000 and in the 'users' group
+    # and make sure these dirs are writable by the `users` group.
     && echo "### Creation of jovyan user account" \
     && useradd -m -s /bin/bash -N -u $NB_UID $NB_USER \
     && mkdir -p $CONDA_DIR \
     && mv /tmp/.jupyter $HOME/.jupyter \
     && mv /tmp/.config $HOME/.config \
     && chown $NB_USER:$NB_GID $CONDA_DIR \
-    && chmod g+w /etc/passwd /etc/group \
+    && chown $NB_USER:$NB_GID $HOME \
     && fix-permissions $HOME \
     && fix-permissions $CONDA_DIR \
     && echo "$NB_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/notebook
@@ -75,16 +41,16 @@ USER $NB_UID
 RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh \
     && echo "### Installing miniconda" \
     && bash /tmp/miniconda.sh -bfp $CONDA_DIR \
-    && rm -rf /tmp/miniconda.sh \
-    && conda update conda \
+    && rm -rf /tmp/miniconda.sh 
 # core jupyter installation using conda
+RUN conda update conda \
     && echo "### Installs using conda" \
     && conda install -y \
         python=3 \
         notebook \
-        ipywidgets=6.* \
+        ipywidgets=6.* 
 # additional desired packages using pip
-    && echo "### Installs using pip" \
+RUN echo "### Installs using pip" \
     && pip --no-cache-dir install \
         bash_kernel \
         jupyter_c_kernel==1.0.0 \
@@ -93,12 +59,12 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
         pypki2 \
         ipydeps \
         jupyter_nbextensions_configurator \
-        http://github.com/nbgallery/nbgallery-extensions/tarball/master#egg=jupyter_nbgallery \
+        http://github.com/nbgallery/nbgallery-extensions/tarball/master#egg=jupyter_nbgallery
 # Add simple kernels (no extra apks)
-    && echo "### Activate simple kernels" \
+RUN echo "### Activate simple kernels" \
     && python -m bash_kernel.install --prefix=$CONDA_DIR \
     && python $CONDA_DIR/share/jupyter/kernels/installers/install_c_kernel --prefix=$CONDA_DIR \
-# Other pip package installation and enabling
+    # Other pip package installation and enabling
     && echo "### Activate jupyter extensions" \
     && jupyter nbextensions_configurator enable --prefix=$CONDA_DIR \
     && jupyter nbextension enable --py --sys-prefix widgetsnbextension \
@@ -106,14 +72,83 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
     && jupyter nbextension install --prefix=$CONDA_DIR --py jupyter_nbgallery \
     && jupyter nbextension enable jupyter_nbgallery --py \
     && jupyter nbextension install --prefix=$CONDA_DIR --py ordo \
-    && jupyter nbextension enable ordo --py \
-    && conda clean --all --yes \
-# Patches? Do we still need them? They go here 
+    && jupyter nbextension enable ordo --py 
+
+RUN conda clean --all --yes \
+    # Patches? Do we still need them? They go here 
     && echo "### Patching" \
     && sed -i 's/_max_upload_size_mb = [0-9][0-9]/_max_upload_size_mb = 50/g' \
          $CONDA_DIR/lib/python3*/site-packages/notebook/static/tree/js/notebooklist.js \
          $CONDA_DIR/lib/python3*/site-packages/notebook/static/tree/js/main.min.js \
          $CONDA_DIR/lib/python3*/site-packages/notebook/static/tree/js/main.min.js.map 
+
+COPY kernels/R_small $CONDA_DIR/share/jupyter/kernels/R_small
+COPY kernels/R_big $CONDA_DIR/share/jupyter/kernels/R_big
+COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
+
+# last builder cleanup
+USER root
+RUN echo "### Final cleanup of unneeded files" \
+    && clean-pyc-files $CONDA_DIR/lib/python3* \
+## move jovyan to make it easier to copy
+    && mv $HOME $CONDA_DIR/ 
+
+
+########################################
+# second layer
+########################################
+FROM centos:latest
+MAINTAINER team@nb.gallery
+ 
+# Add Tini
+ENV TINI_VERSION=v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+
+# resetup ENV variables
+ENV CONDA_DIR=/opt/conda \
+    CONDA_KERNELS=$CONDA_DIR/share/jupyter/kernels \
+    SHELL=/bin/bash \
+    NB_USER=jovyan \
+    NB_UID=1000 \
+    NB_GID=100 \
+    LC_ALL=en_US.UTF-8 \
+    LANG=en_US.UTF-8 \
+    LANGUAGE=en_US.UTF-8
+ENV PATH=$CONDA_DIR/bin:$PATH \
+    HOME=/home/$NB_USER
+
+COPY --from=builder $CONDA_DIR $CONDA_DIR
+
+# second layer RUN
+# RUN yum -y update \
+RUN yum -y install sudo gcc \
+    && echo "### second layer cleanup" \
+    && yum clean all \
+    && rm -rf /var/cache/yum \
+    && rpm --rebuilddb \
+    && rm /bin/bashbug \
+    && rm -rf /usr/local/share/man/* \
+    && rm /usr/bin/gprof  \
+    && clean-pyc-files /usr/lib/python2* \
+    && find /usr/share/terminfo -type f -delete \
+    && chmod +x /tini \
+    && echo "$NB_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/notebook \
+    && echo "### Creation of jovyan user account" \
+    && useradd -s /bin/bash -N -u $NB_UID $NB_USER \
+    && rm -rf $HOME \
+    && mv $CONDA_DIR/$NB_USER /home/ \
+    && chown $NB_USER:$NB_GID $CONDA_DIR \
+    && chown $NB_USER:$NB_GID $HOME \
+    && fix-permissions $HOME \
+    && fix-permissions $CONDA_DIR 
+
+EXPOSE 80 443
+ENTRYPOINT ["/tini", "--"]
+USER $NB_UID
+WORKDIR $HOME
+# start notebook
+CMD ["jupyter-notebook-insecure"]
+
 # Last cleanup
 #    && echo "### Final cleanup of unneeded files" \
 #    && sudo /usr/local/bin/fix-permissions $CONDA_DIR \
@@ -142,10 +177,6 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
 #     && clean-pyc-files /usr/lib/python2* \
 #     && clean-pyc-files $CONDA_DIR/lib/python3*
 
-USER $NB_UID
-WORKDIR $HOME
-# start notebook
-CMD ["jupyter-notebook-insecure"]
 
 #============== old version =============
 # RUN \
