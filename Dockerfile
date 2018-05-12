@@ -20,13 +20,14 @@ EXPOSE 80 443
 # 
 
 # Add Tini
-ENV TINI_VERSION v0.18.0
+ENV TINI_VERSION=v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 ENTRYPOINT ["/tini", "--"]
 
 # Configure environment
 ENV CONDA_DIR=/opt/conda \
+    CONDA_KERNELS=$CONDA_DIR/share/jupyter/kernels \
     SHELL=/bin/bash \
     NB_USER=jovyan \
     NB_UID=1000 \
