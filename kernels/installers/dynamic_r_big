@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-EXECUTABLE=/opt/conda/envs/r-env/bin/R
+EXECUTABLE=/opt/conda/envs/r-env/lib/R/bin/R
 
 # Install if needed
 if [ ! -e  "$EXECUTABLE" ]; then
@@ -14,6 +14,6 @@ if [ ! -e  "$EXECUTABLE" ]; then
 fi
 
 # Run the kernel
-source activate r-env
+# source activate r-env
 exec $EXECUTABLE "$@"
 

@@ -1,5 +1,5 @@
 {
-  "argv": ["dynamic_r_small", "--slave", "-e", "IRkernel::main()", "--args", "{connection_file}"],
+  "argv": ["$CONDA_KERNELS/installers/dynamic_r_small", "--slave", "-e", "IRkernel::main()", "--args", "{connection_file}"],
   "display_name": "R (small install)",
   "language": "R"
 }
