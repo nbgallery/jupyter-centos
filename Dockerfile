@@ -2,7 +2,6 @@ FROM centos:latest as builder
 
 # Configure environment
 ENV CONDA_DIR=/opt/conda \
-    CONDA_KERNELS=$CONDA_DIR/share/jupyter/kernels \
     SHELL=/bin/bash \
     NB_USER=jovyan \
     NB_UID=1000 \
@@ -30,8 +29,8 @@ RUN yum -y update \
     && mkdir -p $CONDA_DIR \
     && mv /tmp/.jupyter $HOME/.jupyter \
     && mv /tmp/.config $HOME/.config \
-    && chown $NB_USER:$NB_GID $CONDA_DIR \
-    && chown $NB_USER:$NB_GID $HOME \
+    && chown -R $NB_USER:$NB_GID $CONDA_DIR \
+    && chown -R $NB_USER:$NB_GID $HOME \
     && fix-permissions $HOME \
     && fix-permissions $CONDA_DIR \
     && echo "$NB_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/notebook
@@ -74,25 +73,22 @@ RUN echo "### Activate simple kernels" \
     && jupyter nbextension install --prefix=$CONDA_DIR --py ordo \
     && jupyter nbextension enable ordo --py 
 
-RUN conda clean --all --yes \
-    # Patches? Do we still need them? They go here 
-    && echo "### Patching" \
+# Patches? Do we still need them? They go here 
+RUN echo "### Patching" \
     && sed -i 's/_max_upload_size_mb = [0-9][0-9]/_max_upload_size_mb = 50/g' \
          $CONDA_DIR/lib/python3*/site-packages/notebook/static/tree/js/notebooklist.js \
          $CONDA_DIR/lib/python3*/site-packages/notebook/static/tree/js/main.min.js \
          $CONDA_DIR/lib/python3*/site-packages/notebook/static/tree/js/main.min.js.map 
 
+# another last cleanup
+RUN echo "### Final stage-one cleanup" \
+    && conda clean --all --yes \ 
+    && clean-pyc-files $CONDA_DIR/ \
+    && find $CONDA_DIR/ -regex ".*/tests?" -type d -print0 | xargs -r0 -- rm -r ; exit 0
+
 COPY kernels/R_small $CONDA_DIR/share/jupyter/kernels/R_small
 COPY kernels/R_big $CONDA_DIR/share/jupyter/kernels/R_big
 COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
-
-# last builder cleanup
-USER root
-RUN echo "### Final cleanup of unneeded files" \
-    && clean-pyc-files $CONDA_DIR/lib/python3* \
-## move jovyan to make it easier to copy
-    && mv $HOME $CONDA_DIR/ 
-
 
 ########################################
 # second layer
@@ -106,7 +102,6 @@ ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 
 # resetup ENV variables
 ENV CONDA_DIR=/opt/conda \
-    CONDA_KERNELS=$CONDA_DIR/share/jupyter/kernels \
     SHELL=/bin/bash \
     NB_USER=jovyan \
     NB_UID=1000 \
@@ -117,8 +112,7 @@ ENV CONDA_DIR=/opt/conda \
 ENV PATH=$CONDA_DIR/bin:$PATH \
     HOME=/home/$NB_USER
 
-COPY --from=builder $CONDA_DIR $CONDA_DIR
-
+USER root
 # second layer RUN
 # RUN yum -y update \
 RUN yum -y install sudo gcc \
@@ -129,18 +123,17 @@ RUN yum -y install sudo gcc \
     && rm /bin/bashbug \
     && rm -rf /usr/local/share/man/* \
     && rm /usr/bin/gprof  \
-    && clean-pyc-files /usr/lib/python2* \
     && find /usr/share/terminfo -type f -delete \
     && chmod +x /tini \
     && echo "$NB_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/notebook \
     && echo "### Creation of jovyan user account" \
     && useradd -s /bin/bash -N -u $NB_UID $NB_USER \
-    && rm -rf $HOME \
-    && mv $CONDA_DIR/$NB_USER /home/ \
-    && chown $NB_USER:$NB_GID $CONDA_DIR \
-    && chown $NB_USER:$NB_GID $HOME \
-    && fix-permissions $HOME \
-    && fix-permissions $CONDA_DIR 
+    && rm -rf $HOME 
+#    && echo "### Moving home directory into place" \
+#    && mv $CONDA_DIR/$NB_USER /home/ 
+
+COPY --chown=1000:100 --from=builder $CONDA_DIR $CONDA_DIR
+COPY --chown=1000:100 --from=builder $HOME $HOME
 
 EXPOSE 80 443
 ENTRYPOINT ["/tini", "--"]
@@ -148,188 +141,3 @@ USER $NB_UID
 WORKDIR $HOME
 # start notebook
 CMD ["jupyter-notebook-insecure"]
-
-# Last cleanup
-#    && echo "### Final cleanup of unneeded files" \
-#    && sudo /usr/local/bin/fix-permissions $CONDA_DIR \
-#    && sudo rpm -e --nodeps curl bzip2 \
-#    && sudo yum clean all \
-#    && sudo rm -rf /var/cache/yum \
-#    && sudo rpm --rebuilddb \
-#    && sudo /usr/local/bin/clean-pyc-files /usr/lib/python2* \
-#    && sudo /usr/local/bin/clean-pyc-files $CONDA_DIR/lib/python3* \
-#    && echo "### Done with cleanup"
-
-
-# cleanup
-# USER root
-
-# COPY kernels/R_small $CONDA_DIR/share/jupyter/kernels/R_small
-# COPY kernels/R_big $CONDA_DIR/share/jupyter/kernels/R_big
-# COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
-
-# RUN echo "### Final cleanup of unneeded files" \
-#     && fix-permissions $CONDA_DIR \
-#     && rpm -e --nodeps curl bzip2 \
-#     && yum clean all \
-#     && rm -rf /var/cache/yum \
-#     && rpm --rebuilddb \
-#     && clean-pyc-files /usr/lib/python2* \
-#     && clean-pyc-files $CONDA_DIR/lib/python3*
-
-
-#============== old version =============
-# RUN \
-#   min-apk binutils && \
-#   min-apk \
-#     bash \
-#     bzip2 \
-#     curl \
-#     file \
-#     gcc \
-#     g++ \
-#     git \
-#     libressl \
-#     libsodium-dev \
-#     make \
-#     openssh-client \
-#     patch \
-#     readline-dev \
-#     tar \
-#     tini && \
-#   echo "### Install specific version of zeromq from source" && \
-#   min-package https://archive.org/download/zeromq_4.0.4/zeromq-4.0.4.tar.gz && \
-#   ln -s /usr/local/lib/libzmq.so.3 /usr/local/lib/libzmq.so.4 && \
-#   strip --strip-unneeded --strip-debug /usr/local/bin/curve_keygen && \
-#   echo "### Alpine compatibility patch for various packages" && \
-#   if [ ! -f /usr/include/xlocale.h ]; then echo '#include <locale.h>' > /usr/include/xlocale.h; fi && \
-#   echo "### Cleanup unneeded files" && \
-#   clean-terminfo && \
-#   rm /bin/bashbug && \
-#   rm /usr/local/share/man/*/zmq* && \
-#   rm -rf /usr/include/c++/*/java && \
-#   rm -rf /usr/include/c++/*/javax && \
-#   rm -rf /usr/include/c++/*/gnu/awt && \
-#   rm -rf /usr/include/c++/*/gnu/classpath && \
-#   rm -rf /usr/include/c++/*/gnu/gcj && \
-#   rm -rf /usr/include/c++/*/gnu/java && \
-#   rm -rf /usr/include/c++/*/gnu/javax && \
-#   rm /usr/libexec/gcc/x86_64-alpine-linux-musl/*/cc1obj && \
-#   rm /usr/bin/gcov* && \
-#   rm /usr/bin/gprof && \
-#   rm /usr/bin/*gcj
-# 
-# 
-# ########################################################################
-# # Install python2 kernel
-# ########################################################################
-# 
-# RUN \
-#   min-apk \
-#     py2-cffi \
-#     py2-cparser \
-#     py2-cryptography \
-#     py2-dateutil \
-#     py2-decorator \
-#     py2-jinja2 \
-#     py2-openssl \
-#     py2-pip \
-#     py2-ptyprocess \
-#     py2-six \
-#     py2-tornado \
-#     py2-zmq \
-#     python2 \
-#     python2-dev && \
-#   pip install --no-cache-dir --upgrade setuptools pip && \
-#   min-pip2 entrypoints ipykernel ipywidgets==6.0.1 pypki2 ipydeps && \
-#   echo "### Cleanup unneeded files" && \
-#   rm -rf /usr/lib/python2*/*/tests && \
-#   rm -rf /usr/lib/python2*/ensurepip && \
-#   rm -rf /usr/lib/python2*/idlelib && \
-#   rm -rf /usr/share/man/* && \
-#   clean-pyc-files /usr/lib/python2*
-# 
-# 
-# ########################################################################
-# # Install Python3, Jupyter, ipydeps
-# ########################################################################
-# 
-# COPY config/jupyter /root/.jupyter/
-# COPY config/ipydeps /root/.config/ipydeps/
-# 
-# # TODO: decorator conflicts with the c++ kernel apk, which we are
-# # having trouble re-building.  Just let pip install it for now.
-# #    py3-decorator \
-# 
-# RUN \
-#   min-apk \
-#     libffi-dev \
-#     py3-pygments \
-#     py3-cffi \
-#     py3-cryptography \
-#     py3-jinja2 \
-#     py3-openssl \
-#     py3-pexpect \
-#     py3-tornado \
-#     python3 \
-#     python3-dev && \
-#   pip3 install --no-cache-dir --upgrade setuptools pip && \
-#   mkdir -p `python -m site --user-site` && \
-#   min-pip3 jupyter ipywidgets==6.0.1 jupyter_dashboards pypki2 ipydeps ordo && \
-#   pip3 install http://github.com/nbgallery/nbgallery-extensions/tarball/master#egg=jupyter_nbgallery && \
-#   echo "### Install jupyter extensions" && \
-#   jupyter nbextension enable --py --sys-prefix widgetsnbextension && \
-#   jupyter serverextension enable --py jupyter_nbgallery && \
-#   jupyter nbextension install --py jupyter_nbgallery && \
-#   jupyter nbextension enable jupyter_nbgallery --py && \
-#   jupyter dashboards quick-setup --sys-prefix && \
-#   jupyter nbextension install --py ordo && \
-#   jupyter nbextension enable ordo --py && \
-#   echo "### Cleanup unneeded files" && \
-#   rm -rf /usr/lib/python3*/*/tests && \
-#   rm -rf /usr/lib/python3*/ensurepip && \
-#   rm -rf /usr/lib/python3*/idlelib && \
-#   rm -f /usr/lib/python3*/distutils/command/*exe && \
-#   rm -rf /usr/share/man/* && \
-#   clean-pyc-files /usr/lib/python3* && \
-#   echo "### Apply patches" && \
-#   cd / && \
-#   sed -i 's/_max_upload_size_mb = [0-9][0-9]/_max_upload_size_mb = 50/g' \
-#     /usr/lib/python3*/site-packages/notebook/static/tree/js/notebooklist.js \
-#     /usr/lib/python3*/site-packages/notebook/static/tree/js/main.min.js \
-#     /usr/lib/python3*/site-packages/notebook/static/tree/js/main.min.js.map && \
-#   patch -p0 < /root/.patches/ipykernel_displayhook && \
-#   patch -p0 < /root/.patches/websocket_keepalive
-# 
-# 
-# ########################################################################
-# # Add dynamic kernels
-# ########################################################################
-# 
-# ADD kernels /usr/share/jupyter/kernels/
-# ENV JAVA_HOME=/usr/lib/jvm/default-jvm \
-#     SPARK_HOME=/usr/spark \
-#     GOPATH=/go
-# ENV PATH=$PATH:$JAVA_HOME/bin:$SPARK_HOME/bin:$GOPATH/bin:/usr/share/jupyter/kernels/installers \
-#     LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$JAVA_HOME/jre/lib/amd64/server
-# 
-# 
-# ########################################################################
-# # Add simple kernels (no extra apks)
-# ########################################################################
-# 
-# RUN \
-#   min-pip3 bash_kernel jupyter_c_kernel==1.0.0 && \
-#   python3 -m bash_kernel.install && \
-#   clean-pyc-files /usr/lib/python3*
-# 
-# 
-# ########################################################################
-# # Metadata
-# ########################################################################
-# 
-# ENV NBGALLERY_CLIENT_VERSION=7.0.3
-# 
-# LABEL gallery.nb.version=$NBGALLERY_CLIENT_VERSION \
-#       gallery.nb.description="Minimal centos-based Jupyter notebook server" \
-#       gallery.nb.URL="https://github.com/nbgallery"
