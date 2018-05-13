@@ -1,5 +1,5 @@
 {
-  "argv": ["$CONDA_KERNELS/installers/dynamic_r_big", "--slave", "-e", "IRkernel::main()", "--args", "{connection_file}"],
+  "argv": ["/opt/conda/share/jupyter/kernels/installers/dynamic_r_big", "--slave", "-e", "IRkernel::main()", "--args", "{connection_file}"],
   "display_name": "R (big install, separate env)",
   "language": "R"
 }
