@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
-EXECUTABLE=/usr/bin/iruby
+EXECUTABLE=/opt/conda/bin/iruby
 
 if [ ! -e "$EXECUTABLE" ]; then
     echo "Installing iruby ..."
-    curl -L https://github.com/feedforce/ruby-rpm/releases/download/2.5.1/ruby-2.5.1-1.el7.centos.x86_64.rpm -o ruby.rpm
-    sudo yum install ruby.rpm
-    rm ruby.rpm
+    # epl-release should be already installed via dockerfile
     sudo yum install -y epel-release
-    sudo yum install -y libffi-devel zeromq-devel czmq-devel
-    sudo gem install cztop iruby
+    sudo yum install -y czmq-devel
+    # make and ruby should be already conda installed via dockerfile
+    conda install -y gxx_linux-64 
+    gem install cztop iruby
     # shouldn't need to register iruby because of custom script
 fi
 

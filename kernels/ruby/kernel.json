@@ -1,1 +1,1 @@
-{"argv":["iruby","kernel","{connection_file}"],"display_name":"Ruby","language":"ruby"}
+{"argv":["/opt/conda/share/jupyter/kernels/installers/dynamic_iruby_system","kernel","{connection_file}"],"display_name":"Ruby","language":"ruby"}

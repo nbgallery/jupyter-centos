@@ -14,21 +14,21 @@ ENV PATH=$CONDA_DIR/bin:$PATH \
 
 # copy in necessary files
 COPY util/* $CONDA_DIR/bin/
-COPY config/jupyter /tmp/.jupyter/
-COPY config/ipydeps /tmp/.config/ipydeps/
+##COPY config/jupyter /tmp/.jupyter/
+##COPY config/ipydeps /tmp/.config/ipydeps/
 COPY kernels/installers/install_c_kernel $CONDA_DIR/share/jupyter/kernels/installers/
 
 # initial installs and cleanup
 USER root
 RUN yum -y update \
-    && yum -y install curl bzip2 sudo \
+    && yum -y install curl bzip2 sudo gcc epel-release \
     # create jovyan user with UID=1000 and in the 'users' group
     # and make sure these dirs are writable by the `users` group.
     && echo "### Creation of jovyan user account" \
     && useradd -m -s /bin/bash -N -u $NB_UID $NB_USER \
     && mkdir -p $CONDA_DIR \
-    && mv /tmp/.jupyter $HOME/.jupyter \
-    && mv /tmp/.config $HOME/.config \
+##    && mv /tmp/.jupyter $HOME/.jupyter \
+##    && mv /tmp/.config $HOME/.config \
     && chown -R $NB_USER:$NB_GID $CONDA_DIR \
     && chown -R $NB_USER:$NB_GID $HOME \
     && fix-permissions $HOME \
@@ -37,6 +37,9 @@ RUN yum -y update \
 
 # miniconda installation
 USER $NB_UID
+COPY --chown=1000:100 config/jupyter $HOME/.jupyter/ 
+COPY --chown=1000:100 config/ipydeps $HOME/.config/ipydeps/
+
 RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh \
     && echo "### Installing miniconda" \
     && bash /tmp/miniconda.sh -bfp $CONDA_DIR \
@@ -46,11 +49,9 @@ RUN conda update conda \
     && echo "### Installs using conda" \
     && conda install -y \
         python=3 \
-        notebook=5.2 \
+        notebook \
         ipywidgets=6.* \
 		make \
-		gcc \
-		gxx_linux-64 \
 		ruby 	
 
 # additional desired packages using pip
@@ -93,6 +94,7 @@ RUN echo "### Final stage-one cleanup" \
 
 COPY kernels/R_small $CONDA_DIR/share/jupyter/kernels/R_small
 COPY kernels/R_big $CONDA_DIR/share/jupyter/kernels/R_big
+COPY kernels/ruby $CONDA_DIR/share/jupyter/kernels/ruby
 COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
 
 ########################################
@@ -120,7 +122,7 @@ ENV PATH=$CONDA_DIR/bin:$PATH \
 USER root
 # second layer RUN
 # RUN yum -y update \
-RUN yum -y install sudo \
+RUN yum -y install sudo gcc epel-release \
     && echo "### second layer cleanup" \
     && yum clean all \
     && rm -rf /var/cache/yum \
