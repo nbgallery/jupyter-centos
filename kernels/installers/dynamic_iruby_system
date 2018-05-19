@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+EXECUTABLE=/usr/bin/iruby
+
+if [ ! -e "$EXECUTABLE" ]; then
+    echo "Installing iruby ..."
+    curl -L https://github.com/feedforce/ruby-rpm/releases/download/2.5.1/ruby-2.5.1-1.el7.centos.x86_64.rpm -o ruby.rpm
+    sudo yum install ruby.rpm
+    rm ruby.rpm
+    sudo yum install -y epel-release
+    sudo yum install -y libffi-devel zeromq-devel czmq-devel
+    sudo gem install cztop iruby
+    # shouldn't need to register iruby because of custom script
+fi
+
+## what does this do?
+# hash -r
+if [ ! -e "$EXECUTABLE" ]; then
+  echo "Installation failed!"
+  exit 2
+fi
+
+exec $EXECUTABLE "$@"
