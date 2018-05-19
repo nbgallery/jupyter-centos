@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+EXECUTABLE=/opt/conda/envs/py2/bin/python
+
+if [ ! -e "$EXECUTABLE" ]; then
+    echo "Installing py2 in a separate env..."
+    conda create -y -n py2 python=2 ipykernel
+fi
+
+## what does this do?
+# hash -r
+if [ ! -e "$EXECUTABLE" ]; then
+  echo "Installation failed!"
+  exit 2
+fi
+
+exec $EXECUTABLE "$@"

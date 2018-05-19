@@ -48,11 +48,12 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
 RUN conda update conda \
     && echo "### Installs using conda" \
     && conda install -y \
-        python=3 \
-        notebook \
-        ipywidgets=6.* \
-		make \
-		ruby 	
+        "python=3" \
+        "notebook<5.3" \
+        "ipywidgets<7" \
+        "tornado<5" \
+        make \
+        ruby   
 
 # additional desired packages using pip
 RUN echo "### Installs using pip" \
@@ -95,6 +96,7 @@ RUN echo "### Final stage-one cleanup" \
 COPY kernels/R_small $CONDA_DIR/share/jupyter/kernels/R_small
 COPY kernels/R_big $CONDA_DIR/share/jupyter/kernels/R_big
 COPY kernels/ruby $CONDA_DIR/share/jupyter/kernels/ruby
+COPY kernels/python2 $CONDA_DIR/share/jupyter/kernels/python2
 COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
 
 ########################################

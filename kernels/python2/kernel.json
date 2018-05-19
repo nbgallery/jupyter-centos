@@ -1,8 +1,8 @@
 {
- "display_name": "Python 2", 
+ "display_name": "Old Python 2", 
  "language": "python", 
  "argv": [
-  "/usr/bin/python", 
+  "/opt/conda/share/jupyter/kernels/installers/dynamic_py2_env", 
   "-m", 
   "ipykernel", 
   "-f", 
