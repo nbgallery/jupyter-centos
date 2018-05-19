@@ -21,7 +21,7 @@ COPY kernels/installers/install_c_kernel $CONDA_DIR/share/jupyter/kernels/instal
 # initial installs and cleanup
 USER root
 RUN yum -y update \
-    && yum -y install curl bzip2 sudo gcc \
+    && yum -y install curl bzip2 sudo \
     # create jovyan user with UID=1000 and in the 'users' group
     # and make sure these dirs are writable by the `users` group.
     && echo "### Creation of jovyan user account" \
@@ -46,8 +46,13 @@ RUN conda update conda \
     && echo "### Installs using conda" \
     && conda install -y \
         python=3 \
-        notebook \
-        ipywidgets=6.* 
+        notebook=5.2 \
+        ipywidgets=6.* \
+		make \
+		gcc \
+		gxx_linux-64 \
+		ruby 	
+
 # additional desired packages using pip
 RUN echo "### Installs using pip" \
     && pip --no-cache-dir install \
@@ -115,7 +120,7 @@ ENV PATH=$CONDA_DIR/bin:$PATH \
 USER root
 # second layer RUN
 # RUN yum -y update \
-RUN yum -y install sudo gcc \
+RUN yum -y install sudo \
     && echo "### second layer cleanup" \
     && yum clean all \
     && rm -rf /var/cache/yum \
