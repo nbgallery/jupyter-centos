@@ -97,6 +97,7 @@ COPY kernels/R_small $CONDA_DIR/share/jupyter/kernels/R_small
 COPY kernels/R_big $CONDA_DIR/share/jupyter/kernels/R_big
 COPY kernels/ruby $CONDA_DIR/share/jupyter/kernels/ruby
 COPY kernels/python2 $CONDA_DIR/share/jupyter/kernels/python2
+COPY kernels/javascript $CONDA_DIR/share/jupyter/kernels/javascript
 COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
 
 ########################################
