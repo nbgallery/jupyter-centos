@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+EXECUTABLE=/opt/conda/bin/ijskernel
+
+if [ ! -e "$EXECUTABLE" ]; then
+    echo "Installing the ijskernel for Javascript..."
+    conda install -y nodejs
+    npm install -g ijavascript
+fi
+
+## what does this do?
+# hash -r
+if [ ! -e "$EXECUTABLE" ]; then
+  echo "Installation failed!"
+  exit 2
+fi
+
+exec $EXECUTABLE "$@"
