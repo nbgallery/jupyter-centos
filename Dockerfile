@@ -121,6 +121,7 @@ ENV CONDA_DIR=/opt/conda \
     LANGUAGE=en_US.UTF-8
 ENV PATH=$CONDA_DIR/bin:$PATH \
     HOME=/home/$NB_USER
+    JUPYTER=/opt/conda/bin/jupyter
 
 USER root
 # second layer RUN

@@ -4,7 +4,7 @@ EXECUTABLE=/opt/conda/bin/ijskernel
 
 if [ ! -e "$EXECUTABLE" ]; then
     echo "Installing the ijskernel for Javascript..."
-    conda install nodejs
+    conda install -y nodejs
     npm install -g ijavascript
 fi
 
