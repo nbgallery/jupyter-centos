@@ -1,3 +1,6 @@
+################################################################################
+# Setup builder stage OS
+################################################################################
 FROM centos:latest as builder
 
 # Configure environment
@@ -14,36 +17,38 @@ ENV PATH=$CONDA_DIR/bin:$PATH \
 
 # copy in necessary files
 COPY util/* $CONDA_DIR/bin/
-##COPY config/jupyter /tmp/.jupyter/
-##COPY config/ipydeps /tmp/.config/ipydeps/
-COPY kernels/installers/install_c_kernel $CONDA_DIR/share/jupyter/kernels/installers/
 
-# initial installs and cleanup
+# initial installs using yum
 USER root
 RUN yum -y update \
-    && yum -y install curl bzip2 sudo gcc epel-release \
-    # create jovyan user with UID=1000 and in the 'users' group
-    # and make sure these dirs are writable by the `users` group.
-    && echo "### Creation of jovyan user account" \
+    && yum -y install \
+        curl \
+        bzip2 \
+        sudo \
+        gcc \
+        epel-release 
+
+# create jovyan user with UID=1000 and in the 'users' group
+# and make sure these dirs are writable by the `users` group.
+RUN echo "### Creation of jovyan user account" \
     && useradd -m -s /bin/bash -N -u $NB_UID $NB_USER \
     && mkdir -p $CONDA_DIR \
-##    && mv /tmp/.jupyter $HOME/.jupyter \
-##    && mv /tmp/.config $HOME/.config \
     && chown -R $NB_USER:$NB_GID $CONDA_DIR \
     && chown -R $NB_USER:$NB_GID $HOME \
     && fix-permissions $HOME \
     && fix-permissions $CONDA_DIR \
+    # grant user account sudo privilidge
     && echo "$NB_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/notebook
 
 # miniconda installation
 USER $NB_UID
 COPY --chown=1000:100 config/jupyter $HOME/.jupyter/ 
 COPY --chown=1000:100 config/ipydeps $HOME/.config/ipydeps/
-
 RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh \
     && echo "### Installing miniconda" \
     && bash /tmp/miniconda.sh -bfp $CONDA_DIR \
     && rm -rf /tmp/miniconda.sh 
+
 # core jupyter installation using conda
 RUN conda update conda \
     && echo "### Installs using conda" \
@@ -66,7 +71,9 @@ RUN echo "### Installs using pip" \
         ipydeps \
         jupyter_nbextensions_configurator \
         http://github.com/nbgallery/nbgallery-extensions/tarball/master#egg=jupyter_nbgallery
+
 # Add simple kernels (no extra apks)
+COPY kernels/installers/install_c_kernel $CONDA_DIR/share/jupyter/kernels/installers/
 RUN echo "### Activate simple kernels" \
     && python -m bash_kernel.install --prefix=$CONDA_DIR \
     && python $CONDA_DIR/share/jupyter/kernels/installers/install_c_kernel --prefix=$CONDA_DIR \
@@ -93,6 +100,7 @@ RUN echo "### Final stage-one cleanup" \
     && clean-pyc-files $CONDA_DIR/ \
     && find $CONDA_DIR/ -regex ".*/tests?" -type d -print0 | xargs -r0 -- rm -r ; exit 0
 
+# add in all the dynamic kernels
 COPY kernels/R_small $CONDA_DIR/share/jupyter/kernels/R_small
 COPY kernels/R_big $CONDA_DIR/share/jupyter/kernels/R_big
 COPY kernels/ruby $CONDA_DIR/share/jupyter/kernels/ruby
@@ -100,9 +108,12 @@ COPY kernels/python2 $CONDA_DIR/share/jupyter/kernels/python2
 COPY kernels/javascript $CONDA_DIR/share/jupyter/kernels/javascript
 COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
 
-########################################
-# second layer
-########################################
+################################################################################
+# second stage
+# - starts from scratch centos
+# - copies in the /opt/conda and /home/jovyan directories
+# - cleans up
+################################################################################
 FROM centos:latest
 MAINTAINER team@nb.gallery
  
@@ -120,35 +131,52 @@ ENV CONDA_DIR=/opt/conda \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US.UTF-8
 ENV PATH=$CONDA_DIR/bin:$PATH \
-    HOME=/home/$NB_USER
+    HOME=/home/$NB_USER \
     JUPYTER=/opt/conda/bin/jupyter
 
+
+# second stage install packages and cleanup
 USER root
-# second layer RUN
 # RUN yum -y update \
-RUN yum -y install sudo gcc epel-release \
+RUN yum -y install \
+        sudo \
+        gcc \
+        epel-release \
+#        git \
     && echo "### second layer cleanup" \
     && yum clean all \
-    && rm -rf /var/cache/yum \
     && rpm --rebuilddb \
-    && rm /bin/bashbug \
-    && rm -rf /usr/local/share/man/* \
-    && rm /usr/bin/gprof  \
+    && rm -rf /var/cache/yum \
+              /bin/bashbug \
+              /usr/local/share/man/* \
+              /usr/bin/gprof  \
     && find /usr/share/terminfo -type f -delete \
     && chmod +x /tini \
     && echo "$NB_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/notebook \
     && echo "### Creation of jovyan user account" \
     && useradd -s /bin/bash -N -u $NB_UID $NB_USER \
     && rm -rf $HOME 
-#    && echo "### Moving home directory into place" \
-#    && mv $CONDA_DIR/$NB_USER /home/ 
 
+# copy in built package from base layer
 COPY --chown=1000:100 --from=builder $CONDA_DIR $CONDA_DIR
 COPY --chown=1000:100 --from=builder $HOME $HOME
 
+# set startpoints
 EXPOSE 80 443
 ENTRYPOINT ["/tini", "--"]
 USER $NB_UID
 WORKDIR $HOME
+
 # start notebook
 CMD ["jupyter-notebook-insecure"]
+
+
+########################################################################
+# Metadata
+########################################################################
+
+ENV NBGALLERY_CLIENT_VERSION=8.0.0
+
+LABEL gallery.nb.version=$NBGALLERY_CLIENT_VERSION \
+      gallery.nb.description="Centos-based Jupyter notebook server" \
+      gallery.nb.URL="https://github.com/nbgallery/jupyter-centos"
