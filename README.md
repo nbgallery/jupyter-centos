@@ -40,3 +40,13 @@ docker run --rm -p 443:443 nbgallery/jupyter-centos
 ```
 
 The default entrypoint is [jupyter-notebook-secure](util/jupyter-notebook-secure), which will generate a self-signed certificate and then launch the jupyter notebook server under HTTPS with an automatically-generated [authentication token](http://jupyter-notebook.readthedocs.io/en/stable/security.html).
+
+## Development and testing of the image
+
+Launching the container with the command:
+
+```
+docker run -p 8888:8888 -it jupyter-centos bash
+```
+
+Will launch you into a bash prompt inside the container. The shortcut command `ji` will launch an insecure version of Jupyter that should be accessible on your system's `localhost:8888`
