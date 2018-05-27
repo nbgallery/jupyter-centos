@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+EXECUTABLE=$HOME/.local/share/lgo
+
+if [ ! -e "$EXECUTABLE" ]; then
+    echo "Installing the lgo kernel for the Go language..."
+    sudo yum install zeromq-devel
+    conda install -y -c conda-forge git go
+    export GOPATH=$HOME/.local/share/go
+    go get github.com/yunabe/lgo/cmd/lgo && go get -d github.com/yunabe/lgo/cmd/lgo-internal
+    export LGOPATH=$HOME/.local/share/lgo
+    export PATH=$GOPATH/bin:$PATH
+    lgo install 
+fi
+
+## what does this do?
+# hash -r
+if [ ! -e "$EXECUTABLE" ]; then
+  echo "Installation failed!"
+  exit 2
+fi
+
+exec $EXECUTABLE "$@"

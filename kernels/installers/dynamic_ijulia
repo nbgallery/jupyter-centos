@@ -4,8 +4,7 @@ EXECUTABLE=/opt/conda/bin/ijskernel
 
 if [ ! -e "$EXECUTABLE" ]; then
     echo "Installing the ijskernel for Javascript..."
-    conda install -y nodejs
-    npm install -g ijavascript
+    conda create -y -n julia -c conda-forge julia 
 fi
 
 ## what does this do?

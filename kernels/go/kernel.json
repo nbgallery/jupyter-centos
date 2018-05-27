@@ -1,9 +1,6 @@
 {
-    "argv": [
-    	"gophernotes", 
-    	"{connection_file}"
-    	],
-    "display_name": "Go",
-    "language": "go",
-    "name": "go"
+    "argv":["/opt/conda/share/jupyter/kernels/installers/dynamic_lgo", 
+            "--connection_file={connection_file}",
+    "display_name":"Go (lgo)",
+    "language":"go"
 }
