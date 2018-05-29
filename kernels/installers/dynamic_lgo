@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-EXECUTABLE=$HOME/.local/share/lgo
+EXECUTABLE=$HOME/.local/share/go/bin/lgo
 
 if [ ! -e "$EXECUTABLE" ]; then
     echo "Installing the lgo kernel for the Go language..."
-    sudo yum install zeromq-devel
+    sudo yum -y update && sudo yum install -y zeromq-devel
     conda install -y -c conda-forge git go
     export GOPATH=$HOME/.local/share/go
     go get github.com/yunabe/lgo/cmd/lgo && go get -d github.com/yunabe/lgo/cmd/lgo-internal

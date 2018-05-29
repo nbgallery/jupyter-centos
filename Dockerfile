@@ -132,13 +132,14 @@ ENV CONDA_DIR=/opt/conda \
     LANGUAGE=en_US.UTF-8
 ENV PATH=$CONDA_DIR/bin:$PATH \
     HOME=/home/$NB_USER \
-    JUPYTER=/opt/conda/bin/jupyter
-
+    JUPYTER=/opt/conda/bin/jupyter 
+ENV GOPATH=$HOME/.local/share/go \
+    LGOPATH=$HOME/.local/share/lgo
 
 # second stage install packages and cleanup
 USER root
-# RUN yum -y update \
-RUN yum -y install \
+RUN yum -y update \
+    && yum -y install \
         sudo \
         gcc \
         epel-release \
