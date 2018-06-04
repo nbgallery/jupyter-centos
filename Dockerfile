@@ -99,7 +99,7 @@ RUN echo "### Final stage-one cleanup" \
     && conda clean --all --yes \ 
 #    && clean-pyc-files $CONDA_DIR/ \
     # remove all compiled and test python files we can find
-    && find $CONDA_DIR -name '*.py[co]' -delete ; exit 0 \
+    && find $CONDA_DIR -name '*.py[co]' -delete \
     && find $CONDA_DIR -regex ".*/tests?" -type d -print0 | xargs -r0 -- rm -r ; exit 0
 
 # add in all the dynamic kernels
@@ -154,7 +154,7 @@ RUN yum -y update \
               /usr/local/share/man/* \
               /usr/bin/gprof  \
     && find /usr/share/terminfo -type f -delete \
-    && find / -name '*.py[co]' -delete ; exit 0 \
+    && find / -name '*.py[co]' -delete \
     && chmod +x /tini \
     && echo "$NB_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/notebook \
     && echo "### Creation of jovyan user account" \
