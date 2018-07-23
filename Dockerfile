@@ -54,9 +54,9 @@ RUN conda update conda \
     && echo "### Installs using conda" \
     && conda install -y \
         "python=3" \
-        "notebook<5.3" \
+        "notebook" \
         "ipywidgets<7" \
-        "tornado<5" \
+        "tornado" \
         make \
         ruby   
 
