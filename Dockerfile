@@ -144,7 +144,6 @@ RUN yum -y update \
         sudo \
         gcc \
         epel-release \
-#        git \
     && echo "### second layer cleanup" \
     && yum clean all \
     && rpm --rebuilddb \
