@@ -54,9 +54,9 @@ RUN conda update conda \
     && echo "### Installs using conda" \
     && conda install -y \
         "python=3" \
-        "notebook<5.3" \
+        "notebook" \
         "ipywidgets<7" \
-        "tornado<5" \
+        "tornado" \
         make \
         ruby   
 
@@ -144,7 +144,6 @@ RUN yum -y update \
         sudo \
         gcc \
         epel-release \
-#        git \
     && echo "### second layer cleanup" \
     && yum clean all \
     && rpm --rebuilddb \
@@ -178,7 +177,7 @@ CMD ["jupyter-notebook-secure"]
 # Metadata
 ########################################################################
 
-ENV NBGALLERY_CLIENT_VERSION=8.0.0
+ENV NBGALLERY_CLIENT_VERSION=8.0.1
 
 LABEL gallery.nb.version=$NBGALLERY_CLIENT_VERSION \
       gallery.nb.description="Centos-based Jupyter notebook server" \
