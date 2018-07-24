@@ -50,3 +50,11 @@ docker run -p 8888:8888 -it jupyter-centos bash
 ```
 
 Will launch you into a bash prompt inside the container. The shortcut command `ji` will launch an insecure version of Jupyter that should be accessible on your system's `localhost:8888`
+
+## Changelog
+
+### v8.0.1 
+* still alpha testing, but this version uses the latest versions of Jupyter notebook and tornado
+
+### v8.0.0 
+* initial Alpha release rolled into [the docker repo](https://hub.docker.com/r/nbgallery/jupyter-centos/tags/) (I'll do better about tag naming moving forward)
