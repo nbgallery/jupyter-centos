@@ -142,6 +142,7 @@ USER root
 RUN yum -y update \
     && yum -y install \
         sudo \
+        which \
         gcc \
         epel-release \
     && echo "### second layer cleanup" \
@@ -164,7 +165,7 @@ COPY --chown=1000:100 --from=builder $CONDA_DIR $CONDA_DIR
 COPY --chown=1000:100 --from=builder $HOME $HOME
 
 # set startpoints
-EXPOSE 80 443
+EXPOSE 443
 ENTRYPOINT ["/tini", "--"]
 USER $NB_UID
 WORKDIR $HOME
