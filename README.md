@@ -53,6 +53,10 @@ Will launch you into a bash prompt inside the container. The shortcut command `j
 
 ## Changelog
 
+### v8.0.2
+* testing fresh updates of all the packages to see if it fixes some of the security issues in docker hub. 
+* attempt to fix issue #3 (permission to open port 443 as `jovyan` instead of having to be root)
+
 ### v8.0.1 
 * still alpha testing, but this version uses the latest versions of Jupyter notebook and tornado
 
