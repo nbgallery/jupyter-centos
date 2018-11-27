@@ -54,7 +54,7 @@ RUN conda update conda \
     && echo "### Installs using conda" \
     && conda install -y \
         "python=3" \
-        "notebook" \
+        "jupyterlab" \
         "ipywidgets<7" \
         "tornado" \
         make \
@@ -171,7 +171,7 @@ USER $NB_UID
 WORKDIR $HOME
 
 # start notebook
-CMD ["jupyter-notebook-secure"]
+CMD ["jupyter-lab-secure"]
 
 
 ########################################################################

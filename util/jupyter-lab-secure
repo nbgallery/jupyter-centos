@@ -1,0 +1,22 @@
+#!/bin/bash
+CERTS_PATH=/opt/conda/etc/pki/tls/certs
+
+mkdir -p $CERTS_PATH
+
+if [ ! -f $CERTS_PATH/server.pem ]; then
+        echo "Generating certificates ..."
+        openssl req \
+                -nodes \
+                -x509 \
+                -days 3650 \
+                -newkey rsa \
+                -keyout $CERTS_PATH/server.key \
+                -out $CERTS_PATH/server.pem \
+                -subj "/C=US/ST=CO/L=Denver/O=nbgallery/CN=nbgallery team/emailAddress=team@nb.gallery"
+
+fi
+
+exec jupyter lab\
+        --certfile=$CERTS_PATH/server.pem \
+        --keyfile=$CERTS_PATH/server.key \
+        --NotebookApp.ssl_options="{'ssl_version':5}"
