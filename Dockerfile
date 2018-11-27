@@ -177,7 +177,7 @@ CMD ["jupyter-notebook-secure"]
 ########################################################################
 # Metadata
 ########################################################################
-ENV NBGALLERY_CLIENT_VERSION=8.0.1
+ENV NBGALLERY_CLIENT_VERSION=8.0.3
 
 LABEL gallery.nb.version=$NBGALLERY_CLIENT_VERSION \
       gallery.nb.description="Centos-based Jupyter notebook server" \

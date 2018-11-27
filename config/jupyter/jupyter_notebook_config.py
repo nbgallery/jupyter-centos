@@ -5,8 +5,8 @@ import sys
 home = os.environ['HOME']
 sys.path.append('{0}/.jupyter/extensions/'.format(home))
 
-c.NotebookApp.ip = 'localhost'
-c.NotebookApp.port = 80
+c.NotebookApp.ip = '0.0.0.0'
+c.NotebookApp.port = 8888
 c.NotebookApp.open_browser = False
 c.NotebookApp.allow_credentials = True
 c.NotebookApp.nbserver_extensions = {'jupyter_nbgallery.status':True, 'jupyter_nbgallery.post':True}
