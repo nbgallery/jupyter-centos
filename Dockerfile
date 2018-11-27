@@ -165,7 +165,7 @@ COPY --chown=1000:100 --from=builder $CONDA_DIR $CONDA_DIR
 COPY --chown=1000:100 --from=builder $HOME $HOME
 
 # set startpoints
-EXPOSE 443
+EXPOSE 80 443
 ENTRYPOINT ["/tini", "--"]
 USER $NB_UID
 WORKDIR $HOME
@@ -177,7 +177,6 @@ CMD ["jupyter-notebook-secure"]
 ########################################################################
 # Metadata
 ########################################################################
-
 ENV NBGALLERY_CLIENT_VERSION=8.0.1
 
 LABEL gallery.nb.version=$NBGALLERY_CLIENT_VERSION \

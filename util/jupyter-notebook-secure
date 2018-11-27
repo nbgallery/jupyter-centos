@@ -19,5 +19,5 @@ fi
 exec jupyter notebook \
         --certfile=$CERTS_PATH/server.pem \
         --keyfile=$CERTS_PATH/server.key \
-        --JupyterApp.port=8888 \
-        --JupyterApp.ssl_options="{'ssl_version':5}"
+        --NotebookApp.port=443 \
+        --NotebookApp.ssl_options="{'ssl_version':5}"
