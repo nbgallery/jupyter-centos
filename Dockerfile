@@ -177,7 +177,7 @@ CMD ["jupyter-lab-secure"]
 ########################################################################
 # Metadata
 ########################################################################
-ENV NBGALLERY_CLIENT_VERSION=8.0.3
+ENV NBGALLERY_CLIENT_VERSION=0.0.1
 
 LABEL gallery.nb.version=$NBGALLERY_CLIENT_VERSION \
       gallery.nb.description="Centos-based Jupyter notebook server" \
