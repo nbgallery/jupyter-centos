@@ -55,7 +55,7 @@ RUN conda update conda \
     && conda install -y \
         "python=3" \
         "jupyterlab" \
-        "ipywidgets<7" \
+        "ipywidgets" \
         "tornado" \
         make \
         ruby   
@@ -64,7 +64,7 @@ RUN conda update conda \
 RUN echo "### Installs using pip" \
     && pip --no-cache-dir install \
         bash_kernel \
-        jupyter_c_kernel==1.0.0 \
+#        jupyter_c_kernel==1.0.0 \
         jupyter_dashboards \
         ordo \
         pypki2 \
@@ -75,8 +75,8 @@ RUN echo "### Installs using pip" \
 # Add simple kernels (no extra apks)
 COPY kernels/installers/install_c_kernel $CONDA_DIR/share/jupyter/kernels/installers/
 RUN echo "### Activate simple kernels" \
-    && python -m bash_kernel.install --prefix=$CONDA_DIR \
-    && python $CONDA_DIR/share/jupyter/kernels/installers/install_c_kernel --prefix=$CONDA_DIR \
+#    && python -m bash_kernel.install --prefix=$CONDA_DIR \
+#    && python $CONDA_DIR/share/jupyter/kernels/installers/install_c_kernel --prefix=$CONDA_DIR \
     # Other pip package installation and enabling
     && echo "### Activate jupyter extensions" \
     && jupyter nbextensions_configurator enable --prefix=$CONDA_DIR \
@@ -102,12 +102,12 @@ RUN echo "### Final stage-one cleanup" \
     && find $CONDA_DIR -regex ".*/tests?" -type d -print0 | xargs -r0 -- rm -r ; exit 0
 
 # add in all the dynamic kernels
-COPY kernels/R_small $CONDA_DIR/share/jupyter/kernels/R_small
-COPY kernels/R_big $CONDA_DIR/share/jupyter/kernels/R_big
-COPY kernels/ruby $CONDA_DIR/share/jupyter/kernels/ruby
-COPY kernels/python2 $CONDA_DIR/share/jupyter/kernels/python2
-COPY kernels/javascript $CONDA_DIR/share/jupyter/kernels/javascript
-COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
+# COPY kernels/R_small $CONDA_DIR/share/jupyter/kernels/R_small
+# COPY kernels/R_big $CONDA_DIR/share/jupyter/kernels/R_big
+# COPY kernels/ruby $CONDA_DIR/share/jupyter/kernels/ruby
+# COPY kernels/python2 $CONDA_DIR/share/jupyter/kernels/python2
+# COPY kernels/javascript $CONDA_DIR/share/jupyter/kernels/javascript
+# COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
 
 ################################################################################
 # second stage
