@@ -54,9 +54,11 @@ RUN conda update conda \
     && echo "### Installs using conda" \
     && conda install -y -c conda-forge \
         "python=3" \
-        "notebook" \
-        "ipywidgets" \
-        "tornado" \
+        notebook \
+        ipywidgets \
+        tornado \
+        jupyter_dashboards \
+        jupyter_nbextensions_configurator \
         make \
         ruby   
 
@@ -65,11 +67,9 @@ RUN echo "### Installs using pip" \
     && pip --no-cache-dir install \
         bash_kernel \
         jupyter_c_kernel==1.0.0 \
-        jupyter_dashboards \
         ordo \
         pypki2 \
         ipydeps \
-        jupyter_nbextensions_configurator \
         jupyter_nbgallery
 
 # Add simple kernels (no extra apks)
