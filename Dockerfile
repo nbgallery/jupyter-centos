@@ -44,7 +44,7 @@ RUN echo "### Creation of jovyan user account" \
 # miniconda installation
 USER $NB_UID
 COPY --chown=1000:100 config/jupyter $HOME/.jupyter/ 
-COPY --chown=1000:100 config/ipydeps $HOME/.config/ipydeps/
+#COPY --chown=1000:100 config/ipydeps $HOME/.config/ipydeps/
 RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh \
     && echo "### Installing miniconda" \
     && bash /tmp/miniconda.sh -bfp $CONDA_DIR \
