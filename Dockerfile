@@ -119,7 +119,6 @@ COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
 # - cleans up
 ################################################################################
 FROM centos:latest
-MAINTAINER team@nb.gallery
  
 # Add Tini
 ENV TINI_VERSION=v0.18.0
@@ -184,4 +183,5 @@ ENV NBGALLERY_CLIENT_VERSION=8.0.4
 
 LABEL gallery.nb.version=$NBGALLERY_CLIENT_VERSION \
       gallery.nb.description="Centos-based Jupyter notebook server" \
-      gallery.nb.URL="https://github.com/nbgallery/jupyter-centos"
+      gallery.nb.URL="https://github.com/nbgallery/jupyter-centos" \
+      maintainer="https://github.com/nbgallery"
