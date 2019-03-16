@@ -26,7 +26,8 @@ RUN yum -y update \
         bzip2 \
         sudo \
         gcc \
-        epel-release 
+        epel-release \
+    && yum -y clean all
 
 # create jovyan user with UID=1000 and in the 'users' group
 # and make sure these dirs are writable by the `users` group.
@@ -52,25 +53,27 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
 # core jupyter installation using conda
 RUN conda update conda \
     && echo "### Installs using conda" \
-    && conda install -y \
+    && conda install -y -c conda-forge \
         "python=3" \
-        "notebook" \
-        "ipywidgets<7" \
-        "tornado" \
+        notebook \
+        ipywidgets \
+        tornado \
+        jupyter_dashboards \
+        jupyter_nbextensions_configurator \
         make \
-        ruby   
+        ruby \
+    && conda clean --all --yes
+  
 
 # additional desired packages using pip
 RUN echo "### Installs using pip" \
     && pip --no-cache-dir install \
         bash_kernel \
         jupyter_c_kernel==1.0.0 \
-        jupyter_dashboards \
         ordo \
         pypki2 \
         ipydeps \
-        jupyter_nbextensions_configurator \
-        http://github.com/nbgallery/nbgallery-extensions/tarball/master#egg=jupyter_nbgallery
+        jupyter_nbgallery
 
 # Add simple kernels (no extra apks)
 COPY kernels/installers/install_c_kernel $CONDA_DIR/share/jupyter/kernels/installers/
@@ -116,7 +119,6 @@ COPY kernels/installers/dynamic* $CONDA_DIR/share/jupyter/kernels/installers/
 # - cleans up
 ################################################################################
 FROM centos:latest
-MAINTAINER team@nb.gallery
  
 # Add Tini
 ENV TINI_VERSION=v0.18.0
@@ -177,8 +179,9 @@ CMD ["jupyter-notebook-secure"]
 ########################################################################
 # Metadata
 ########################################################################
-ENV NBGALLERY_CLIENT_VERSION=8.0.3
+ENV NBGALLERY_CLIENT_VERSION=8.0.4
 
 LABEL gallery.nb.version=$NBGALLERY_CLIENT_VERSION \
       gallery.nb.description="Centos-based Jupyter notebook server" \
-      gallery.nb.URL="https://github.com/nbgallery/jupyter-centos"
+      gallery.nb.URL="https://github.com/nbgallery/jupyter-centos" \
+      maintainer="https://github.com/nbgallery"
