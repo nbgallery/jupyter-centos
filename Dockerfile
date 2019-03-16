@@ -26,7 +26,8 @@ RUN yum -y update \
         bzip2 \
         sudo \
         gcc \
-        epel-release 
+        epel-release \
+    && yum -y clean all
 
 # create jovyan user with UID=1000 and in the 'users' group
 # and make sure these dirs are writable by the `users` group.
@@ -60,7 +61,9 @@ RUN conda update conda \
         jupyter_dashboards \
         jupyter_nbextensions_configurator \
         make \
-        ruby   
+        ruby \
+    && conda clean --all --yes
+  
 
 # additional desired packages using pip
 RUN echo "### Installs using pip" \
