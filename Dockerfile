@@ -55,7 +55,7 @@ RUN conda update conda \
     && conda install -y \
         "python=3" \
         "notebook" \
-        "ipywidgets<7" \
+        "ipywidgets" \
         "tornado" \
         make \
         ruby   
@@ -70,7 +70,7 @@ RUN echo "### Installs using pip" \
         pypki2 \
         ipydeps \
         jupyter_nbextensions_configurator \
-        http://github.com/nbgallery/nbgallery-extensions/tarball/master#egg=jupyter_nbgallery
+        jupyter_nbgallery
 
 # Add simple kernels (no extra apks)
 COPY kernels/installers/install_c_kernel $CONDA_DIR/share/jupyter/kernels/installers/
@@ -177,7 +177,7 @@ CMD ["jupyter-notebook-secure"]
 ########################################################################
 # Metadata
 ########################################################################
-ENV NBGALLERY_CLIENT_VERSION=8.0.3
+ENV NBGALLERY_CLIENT_VERSION=8.0.4
 
 LABEL gallery.nb.version=$NBGALLERY_CLIENT_VERSION \
       gallery.nb.description="Centos-based Jupyter notebook server" \
