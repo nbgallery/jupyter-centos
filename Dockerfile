@@ -52,7 +52,7 @@ RUN curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64
 # core jupyter installation using conda
 RUN conda update conda \
     && echo "### Installs using conda" \
-    && conda install -y \
+    && conda install -y -c conda-forge \
         "python=3" \
         "notebook" \
         "ipywidgets" \
