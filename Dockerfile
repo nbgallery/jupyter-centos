@@ -14,6 +14,7 @@ ENV CONDA_DIR=/opt/conda \
     LANGUAGE=en_US.UTF-8
 ENV PATH=$CONDA_DIR/bin:$PATH \
     HOME=/home/$NB_USER
+    
 
 # copy in necessary files
 COPY util/* $CONDA_DIR/bin/
@@ -70,7 +71,7 @@ RUN echo "### Installs using pip" \
         pypki2 \
         ipydeps \
         jupyter_nbextensions_configurator \
-        http://github.com/nbgallery/nbgallery-extensions/tarball/master#egg=jupyter_nbgallery
+        jupyter_nbgallery
 
 # Add simple kernels (no extra apks)
 COPY kernels/installers/install_c_kernel $CONDA_DIR/share/jupyter/kernels/installers/
@@ -116,7 +117,6 @@ RUN echo "### Final stage-one cleanup" \
 # - cleans up
 ################################################################################
 FROM centos:latest
-MAINTAINER team@nb.gallery
  
 # Add Tini
 ENV TINI_VERSION=v0.18.0
@@ -181,4 +181,5 @@ ENV NBGALLERY_CLIENT_VERSION=0.0.1
 
 LABEL gallery.nb.version=$NBGALLERY_CLIENT_VERSION \
       gallery.nb.description="Centos-based Jupyter notebook server" \
-      gallery.nb.URL="https://github.com/nbgallery/jupyter-centos"
+      gallery.nb.URL="https://github.com/nbgallery/jupyter-centos" \
+      maintainer="https://github.com/nbgallery"
